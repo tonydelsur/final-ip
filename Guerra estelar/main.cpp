@@ -22,6 +22,9 @@ public:
 		cprintf(" ");
 	}
 	
+	virtual void mover() = 0;
+	
+	
 };
 
 class NaveJugador : public Objeto {
@@ -48,6 +51,50 @@ public:
 		
 		
 };		
+
+class Meteoro : public Objeto {
+public:
+	Meteoro(int x, int y) : Objeto(x, y, 'O') {}
+	
+	// metodos
+	//sobreescribier el virtual
+	void mover() override {
+		borrar();
+		if(y<25) {
+			y++;
+		} else {
+			y=1;
+		}
+		
+	}
+};
+
+class NaveEnemiga : public Objeto {
+private:
+	bool direccionDerecha; //indica sentido de movimiento
+	
+public:
+	NaveEnemiga(int x, int y) : Objeto(x,y,'#') {}
+	
+	//metodo mover sobreescribiendo
+	void mover() override {
+		borrar();
+		if(direccionDerecha){
+			if(x<80){
+				x++;
+			} else {
+				direccionDerecha = false; // cambia de sentido
+			}
+		} else {
+			if(x>1) {
+				x--;
+			} else {
+				direccionDerecha = true;
+			}
+		}
+		dibujar();
+	}
+};
 
 int main (int argc, char *argv[]) {
 	clrscr();
