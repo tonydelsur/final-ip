@@ -7,6 +7,8 @@ using namespace std;
 // constantes generales
 const int VENTANA = 20;
 const int VELOCIDAD = 250;
+const int ANCHO = 40;
+const int ALTO = 1200;
 const int VELOCIDAD_PROYECTIL = 2000;
 const int TIEMPO_INMUNIDAD = 2000;
 const int TIEMPO_PANTALLA_FINAL = 5000;
@@ -19,7 +21,7 @@ int desplazamiento = 0;
 
 class Principal{	
 protected:	
-	int x, y; // atributos estandares para todos los objetos en movimiento
+	int posX, posY; // atributos estandares para todos los objetos en movimiento
 public:
 	virtual void dibujar() = 0; //dibujar objeto
 	virtual void actualizar() = 0; // actualizar posicion x e y del objeto
@@ -27,8 +29,6 @@ public:
 
 class terreno{
 protected:
-	static const int ANCHO = 40; // ancho de la zona de juego. Static por errores
-	static const int ALTO = 1200; // largo de la zona de juego
 	string canon[ALTO];
 	char canonChar[ALTO][ANCHO];
 public:
@@ -82,31 +82,59 @@ public:
 	}
 };
 
-class nave : public Principal(){
+class nave : public Principal{
 private:
 	int vidas;
 	bool inmunidad;
+	int aPosX, aPosY;
 	
 public:
-	void mover(){
-		
+	nave(){
+		posX = ANCHO / 2;
+		posY = 20;
+		aPosX = posX;
+		aPosY = posY;
+		vidas = 5;
+		inmunidad = false;
 	}
-	void dibujar() override{
+	void mover(){ // mover con las teclas
 		
+		if(kbhit()){
+			char tecla = getch();
+			if(tecla == 75 && posX > 0){ // Izquierda
+				aPosX = posX;
+				posX--;
+			}
+			if(tecla == 77 && posX < ANCHO -1){ // Derecha
+				aPosX = posX;
+				posX++;
+			}
+			// if(tecla==' '){ } // implementacion del disparo mas adelante
+		}
+	}
+	void dibujar() override{ //dibujar en pantalla, problema es tiempo de actualizacion
+		gotoxy(aPosX,20);
+		putchar(' ');
+		gotoxy(posX,20);
+		textcolor(15);
+		putchar('^');
+		gotoxy(41,21);
 	}
 	void actualizar() override{
 		
 	}
-	void manejarColision() {
+	void manejarColision() { // quitar vidas en caso de colision
 		
 	}
-}
+};
 
 int main (int argc, char *argv[]) {
 	terreno zona;
+	nave gladiador;
 	clock_t tInicioScroll = clock();
 	zona.inicializarCanon();
 	while(true){
+		
 		if(clock()-tInicioScroll>=(VELOCIDAD * CLOCKS_PER_SEC / 1000)){
 			desplazamiento++;
 			zona.dibujar();
@@ -115,6 +143,8 @@ int main (int argc, char *argv[]) {
 		if(desplazamiento >= 800){
 			break; // en el futuro será la pantalla de ganador
 		}
+		gladiador.mover();
+		gladiador.dibujar();
 		
 	}
 	
