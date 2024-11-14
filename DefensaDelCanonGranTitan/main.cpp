@@ -29,6 +29,7 @@ public:
 	virtual void actualizar() = 0; // actualizar posicion x e y del objeto
 };
 
+//-----------------------------------------------------------------terreno
 class terreno{
 protected:
 	string canon[ALTO];
@@ -90,6 +91,7 @@ public:
 		
 };
 
+// ----------------------------------------------------------------- Nave	
 class nave : public Principal{
 private:
 	int vidas;
@@ -177,6 +179,85 @@ public:
 		}
 };
 
+//--------------------------------------------------------------------Nave enemiga
+class naveEnemiga : public Principal {
+private:
+	bool activa;           // Indica si la nave está activa
+	int limiteIzq;         // Límite izquierdo del movimiento lateral
+	int limiteDer;         // Límite derecho del movimiento lateral
+	bool moviendoDerecha;  // Dirección del movimiento lateral
+	int ultimoDesplazamiento; // Último desplazamiento sincronizado
+	int aPosX, aPosY; // posicion anterior de la nave
+public:
+	naveEnemiga(){
+		activa=false;
+		moviendoDerecha=true;
+		ultimoDesplazamiento= 0;
+	}
+	
+	void activar(int _desplazamiento) {
+		posY = 1;  // Aparece en la primera línea visible
+		posX = ANCHO / 2;  // Centro horizontal
+		limiteIzq = posX - 5;  // Límite izquierdo
+		limiteDer = posX + 5;  // Límite derecho
+		activa = true;
+		ultimoDesplazamiento = _desplazamiento;  // avanza con el cañon
+	}
+	
+	void desactivar() {
+		activa = false;
+	}
+	
+	void actualizarDesplazamiento(int _desplazamiento) {
+		if (_desplazamiento > ultimoDesplazamiento) {
+			posY++;
+			ultimoDesplazamiento = _desplazamiento;
+			if (posY > VENTANA) {
+				desactivar();  // Desactivar si sale de la pantalla 
+			}
+		}
+	}
+	
+	void actualizar() override {
+		if (!activa) return;
+		
+		// gotoxy(posX, posY - 1);
+		//putchar(' ');  // solo borrador para recordar, no borra realmente
+		aPosX = posX;
+		aPosY = posY;
+		gotoxy(aPosX,aPosY);
+		putchar(' ');
+		// Movimiento lateral medio raro
+		if (moviendoDerecha) {
+			posX++;
+			if (posX >= limiteDer) moviendoDerecha = false;
+		} else {
+			posX--;
+			if (posX <= limiteIzq) moviendoDerecha = true;
+		}
+		// la nave se mueve ridiculamente rápido
+		// controlar porque no se mueve a la velocidad del cañon
+	}
+	
+	void dibujar() override {
+		if (!activa) return;
+		
+		gotoxy(posX, posY);
+		putchar('X');  // Mostrar la nave
+	}
+	
+	int getX(){ 
+		return posX; 
+	}
+	int getY() { 
+		return posY; 
+	}
+	bool estaActiva() { 
+		return activa; 
+	}
+};
+
+//--------------------------------------------------proyectil
 class proyectil : public Principal {
 private:
 	
@@ -192,9 +273,11 @@ public:
 	}
 };
 
+//---------------------------------------------------main
 int main (int argc, char *argv[]) {
 	terreno zona;
 	nave gladiador;
+	naveEnemiga enemigo;
 	clock_t tInicioScroll = clock();
 	zona.inicializarCanon();
 	puntaje = 0;
@@ -204,19 +287,34 @@ int main (int argc, char *argv[]) {
 			desplazamiento++;
 			puntaje = puntaje + 10;
 			zona.dibujar();
+			enemigo.actualizarDesplazamiento(desplazamiento);  // Sincroniza con el cañón
 			tInicioScroll = clock();
+			if (desplazamiento % 25 == 0 && !enemigo.estaActiva()) { // activar nave cada multiplo de 25 desplazamientos
+				enemigo.activar(desplazamiento);
+			}
 		} 
+		
+		
 		if(desplazamiento >= 800){
 			break; // en el futuro será la pantalla de ganador
 		}
 		
+		enemigo.actualizar();
+		enemigo.dibujar();
 		gladiador.mover();
 		gladiador.dibujar();
 		char obstaculo = zona.fondo(gladiador.getX()); // Buscar en la última linea
 		gladiador.manejarColision(obstaculo);
+		if (enemigo.estaActiva() && 
+			gladiador.getX() == enemigo.getX() && 
+			gladiador.getY() == enemigo.getY()) {
+			gladiador.manejarColision('X');
+		}
 		gotoxy(1,22);
 		cout<<"VIDAS: "<<gladiador.getVidas()<<"   PUNTAJE: "<<puntaje;
-		
+		if(desplazamiento >= 800){
+			break; // en el futuro será la pantalla de ganador
+		}
 	}
 	
 	return 0;
