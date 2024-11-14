@@ -6,7 +6,7 @@
 using namespace std;
 // constantes generales
 const int VENTANA = 20;
-const int VELOCIDAD = 10;
+const int VELOCIDAD = 250;
 const int VELOCIDAD_PROYECTIL = 2000;
 const int TIEMPO_INMUNIDAD = 2000;
 const int TIEMPO_PANTALLA_FINAL = 5000;
@@ -76,14 +76,32 @@ public:
 		for(int i= 0; i<20;i++){
 			gotoxy(1,i+1);
 			textcolor(6);
-			cout<<canon[desplazamiento + VENTANA -1 -i]<<desplazamiento+i;
+			cout<<canon[desplazamiento + VENTANA -1 -i];
 			textcolor(15);
 		}
 	}
-	
-	
-	
 };
+
+class nave : public Principal(){
+private:
+	int vidas;
+	bool inmunidad;
+	
+public:
+	void mover(){
+		
+	}
+	void dibujar() override{
+		
+	}
+	void actualizar() override{
+		
+	}
+	void manejarColision() {
+		
+	}
+}
+
 int main (int argc, char *argv[]) {
 	terreno zona;
 	clock_t tInicioScroll = clock();
@@ -95,7 +113,7 @@ int main (int argc, char *argv[]) {
 			tInicioScroll = clock();
 		}
 		if(desplazamiento >= 800){
-			break;
+			break; // en el futuro será la pantalla de ganador
 		}
 		
 	}
