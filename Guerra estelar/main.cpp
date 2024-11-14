@@ -22,6 +22,14 @@ public:
 		cprintf(" ");
 	}
 	
+	int getX(){
+		return x;
+	}
+		
+	int getY(){
+		return y;
+	}
+	
 	virtual void mover() = 0;
 	
 	
@@ -48,6 +56,9 @@ public:
 				 dibujar(); //dibuja la nave en la nueva posicion
 			}
 		}
+	int getX(){
+		return x;
+	}
 		
 		
 };		
@@ -96,15 +107,51 @@ public:
 	}
 };
 
+class Disparo : public Objeto {
+public: 
+	Disparo(int x, int y) : Objeto(x,y,'|'){}
+	
+	void mover() override {
+		borrar();
+		if(y>1) {
+			y--;
+		} 
+		
+		dibujar();
+	}
+};
+
+
 int main (int argc, char *argv[]) {
 	clrscr();
-	NaveJugador nave(40,12);
-	nave.dibujar();
+	Objeto* objetos[3];
+	objetos[0] = new NaveJugador(40,24);
+	objetos[1] = new NaveEnemiga(10,5);
+	objetos[2] = new Meteoro(20,1);
 	
 	//bucle
 	while (true) {
-		nave.mover();
-		gotoxy(1,1);
+		for (int i=0;i<3;i++){
+			objetos[i]->mover();
+		
+		if(kbhit()) {
+			char tecla = getch();
+			if(tecla == 32){
+				if(objetos[3] == nullptr) {
+					objetos[3] = new Disparo(objetos[0]->getX(),24);
+				} else {
+					
+					if(objetos[3]->getY() == 1) {
+						objetos[3]->mover();
+					} else {
+						delete objetos[3];
+					}
+					
+				}
+			}
+			
+		}
+		}
 	}
 	
 	return 0;
