@@ -80,6 +80,34 @@ public:
 			textcolor(15);
 		}
 	}
+	
+		char fondo(int _x) {
+			return canon[desplazamiento][_x]; 
+		}
+		
+		int puntoMedio(int registro) {
+			string linea = canon[registro];
+			int inicioEspacios = -1;
+			int finEspacios = -1;
+			
+			// Buscar inicio y fin de la secuencia de espacios
+			for (int i = 0; i < ANCHO; i++) {
+				if (linea[i] == ' ' && inicioEspacios == -1) {
+					inicioEspacios = i; // Primer espacio
+				}
+				if (linea[i] == ' ' && inicioEspacios != -1) {
+					finEspacios = i; // Último espacio 
+				}
+			}
+			
+			// Si no hay espacios en la línea
+			if (inicioEspacios == -1 || finEspacios == -1) {
+				return -1; // No hay secuencia de espacios
+			}
+			
+			// Calcular la posición central
+			return (inicioEspacios + finEspacios) / 2;
+		}
 };
 
 class nave : public Principal{
@@ -87,6 +115,7 @@ private:
 	int vidas;
 	bool inmunidad;
 	int aPosX, aPosY;
+	clock_t tUltimaColision;
 	
 public:
 	nave(){
@@ -94,9 +123,10 @@ public:
 		posY = 20;
 		aPosX = posX;
 		aPosY = posY;
-		vidas = 5;
-		inmunidad = false;
+		vidas = 5; 
+		tUltimaColision = clock();
 	}
+		
 	void mover(){ // mover con las teclas
 		
 		if(kbhit()){
@@ -113,19 +143,55 @@ public:
 		}
 	}
 	void dibujar() override{ //dibujar en pantalla, problema es tiempo de actualizacion
-		gotoxy(aPosX,20);
+		gotoxy(aPosX,posY);
 		putchar(' ');
-		gotoxy(posX,20);
-		textcolor(15);
+		gotoxy(posX,posY);
+		if(inmunidad){
+			textcolor(LIGHTRED);
+		} else {
+			textcolor(WHITE);
+		}
 		putchar('^');
 		gotoxy(41,21);
 	}
 	void actualizar() override{
 		
 	}
-	void manejarColision() { // quitar vidas en caso de colision
-		
+	int getVidas(){
+		return vidas;
 	}
+	
+	int getX(){
+		return posX;
+	}
+		int getY(){
+			return posY;
+		}
+	bool getInmunidad(){
+		return inmunidad;
+	}
+		
+		
+		void manejarColision(char _caracter) { 
+			// Si el carácter no es espacio, cuenta como colisión
+			if (_caracter != ' ') {
+				// Verificar si ha pasado el tiempo de inmunidad
+				if (clock() - tUltimaColision >= TIEMPO_INMUNIDAD * CLOCKS_PER_SEC / 1000) {
+					vidas--;
+					tUltimaColision = clock();
+					if (vidas < 0) {
+						cout << "Perdiste" << endl; // Pantalla de Game Over
+						// Puedes implementar una salida o reinicio
+					}
+				}
+				}
+
+			if((clock() - tUltimaColision >= TIEMPO_INMUNIDAD * CLOCKS_PER_SEC / 1000)) {
+				inmunidad = false;
+			} else {
+				inmunidad= true;
+			}
+		}
 };
 
 int main (int argc, char *argv[]) {
@@ -139,13 +205,16 @@ int main (int argc, char *argv[]) {
 			desplazamiento++;
 			zona.dibujar();
 			tInicioScroll = clock();
-		}
+		} 
 		if(desplazamiento >= 800){
 			break; // en el futuro será la pantalla de ganador
 		}
 		gladiador.mover();
 		gladiador.dibujar();
-		
+		char obstaculo = zona.fondo(gladiador.getX()); // Buscar en la última linea
+		gladiador.manejarColision(obstaculo);
+		gotoxy(5,22);
+		cout<<gladiador.getVidas()<<"   "<<obstaculo;
 	}
 	
 	return 0;
