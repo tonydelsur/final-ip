@@ -6,13 +6,15 @@
 using namespace std;
 // constantes generales
 const int VENTANA = 20;
-const int VELOCIDAD = 250;
+const int VELOCIDAD_INICIAL = 200; // velocidad incial, cambia con el avance
 const int ANCHO = 40;
 const int ALTO = 1200;
 const int VELOCIDAD_PROYECTIL = 2000;
 const int TIEMPO_INMUNIDAD = 2000;
 const int TIEMPO_PANTALLA_FINAL = 5000;
 int desplazamiento = 0;
+int VELOCIDAD = VELOCIDAD_INICIAL;
+int puntaje;
 
 
 // construir los algoritmos con pruebas externas e internas
@@ -78,6 +80,7 @@ public:
 			textcolor(6);
 			cout<<canon[desplazamiento + VENTANA -1 -i];
 			textcolor(15);
+			VELOCIDAD = VELOCIDAD_INICIAL - static_cast<int>(desplazamiento / 10);
 		}
 	}
 	
@@ -85,29 +88,6 @@ public:
 			return canon[desplazamiento][_x]; 
 		}
 		
-		int puntoMedio(int registro) {
-			string linea = canon[registro];
-			int inicioEspacios = -1;
-			int finEspacios = -1;
-			
-			// Buscar inicio y fin de la secuencia de espacios
-			for (int i = 0; i < ANCHO; i++) {
-				if (linea[i] == ' ' && inicioEspacios == -1) {
-					inicioEspacios = i; // Primer espacio
-				}
-				if (linea[i] == ' ' && inicioEspacios != -1) {
-					finEspacios = i; // Último espacio 
-				}
-			}
-			
-			// Si no hay espacios en la línea
-			if (inicioEspacios == -1 || finEspacios == -1) {
-				return -1; // No hay secuencia de espacios
-			}
-			
-			// Calcular la posición central
-			return (inicioEspacios + finEspacios) / 2;
-		}
 };
 
 class nave : public Principal{
@@ -140,6 +120,9 @@ public:
 				posX++;
 			}
 			// if(tecla==' '){ } // implementacion del disparo mas adelante
+		} else {
+			gotoxy(aPosX, aPosY);
+			putchar(' ');
 		}
 	}
 	void dibujar() override{ //dibujar en pantalla, problema es tiempo de actualizacion
@@ -194,27 +177,46 @@ public:
 		}
 };
 
+class proyectil : public Principal {
+private:
+	
+	
+public:
+	proyectil(int _x){
+				posX = _x;
+	}
+	~proyectil() {}
+	
+	void avanza(){
+		
+	}
+};
+
 int main (int argc, char *argv[]) {
 	terreno zona;
 	nave gladiador;
 	clock_t tInicioScroll = clock();
 	zona.inicializarCanon();
+	puntaje = 0;
 	while(true){
 		
 		if(clock()-tInicioScroll>=(VELOCIDAD * CLOCKS_PER_SEC / 1000)){
 			desplazamiento++;
+			puntaje = puntaje + 10;
 			zona.dibujar();
 			tInicioScroll = clock();
 		} 
 		if(desplazamiento >= 800){
 			break; // en el futuro será la pantalla de ganador
 		}
+		
 		gladiador.mover();
 		gladiador.dibujar();
 		char obstaculo = zona.fondo(gladiador.getX()); // Buscar en la última linea
 		gladiador.manejarColision(obstaculo);
-		gotoxy(5,22);
-		cout<<gladiador.getVidas()<<"   "<<obstaculo;
+		gotoxy(1,22);
+		cout<<"VIDAS: "<<gladiador.getVidas()<<"   PUNTAJE: "<<puntaje;
+		
 	}
 	
 	return 0;
