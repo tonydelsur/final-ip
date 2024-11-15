@@ -10,16 +10,23 @@ const int VELOCIDAD_INICIAL = 200; // velocidad incial, cambia con el avance
 const int ANCHO = 40;
 const int ALTO = 1200;
 const int VELOCIDAD_PROYECTIL = 2000;
+const int TIEMPO_MENSAJE = 5000;
 const int TIEMPO_INMUNIDAD = 2000;
 const int TIEMPO_PANTALLA_FINAL = 5000;
 int desplazamiento = 0;
 int VELOCIDAD = VELOCIDAD_INICIAL;
 int puntaje;
+string mensaje;
+bool mensajeActivo;
 
 
 // construir los algoritmos con pruebas externas e internas
 // ir armando las clases en la medida que las funcionalidades demuestran
 // integrarse bien.
+void esperar(int milisegundos) {
+	clock_t inicio = clock();
+	while (clock() - inicio < milisegundos * CLOCKS_PER_SEC / 1000);
+}
 
 class Principal{	
 protected:	
@@ -73,7 +80,8 @@ public:
 			}
 			canon[i] = linea; // Asignar el string al arreglo unidimensional
 		}
-		
+		gotoxy(2, VENTANA + 4);
+		cout << "Recuerda no enfrentarlos directamente";
 	}
 	void dibujar(){
 		for(int i= 0; i<20;i++){
@@ -178,10 +186,8 @@ public:
 				if (clock() - tUltimaColision >= TIEMPO_INMUNIDAD * CLOCKS_PER_SEC / 1000) {
 					vidas--;
 					tUltimaColision = clock();
-					if (vidas < 0) {
-						cout << "Perdiste" << endl; // Pantalla de Game Over
-						// Puedes implementar una salida o reinicio
-					}
+					gotoxy(2, VENTANA + 4);
+					cout << "Cuidado, puedes dañar la nave";
 				}
 				}
 
@@ -203,7 +209,7 @@ private:
 	int ultimoDesplazamiento; // Último desplazamiento sincronizado
 	int aPosX, aPosY; // posicion anterior de la nave
 	int contadorLateral; //para contolar el retraso de movimiento lateral
-	int delayLateral; // espera forzada para el movimiento lateral
+	int esperarLateral; // espera forzada para el movimiento lateral
 	
 public:
 	naveEnemiga(){
@@ -211,7 +217,7 @@ public:
 		moviendoDerecha=true;
 		ultimoDesplazamiento= 0;
 		contadorLateral = 0;
-		delayLateral = 50; //cantidad de ciclos de espera
+		esperarLateral = 50; //cantidad de ciclos de espera
 		// deberia utilizar un temporizador, pero por ahora va.. a disparar.
 	}
 	
@@ -235,6 +241,7 @@ public:
 			ultimoDesplazamiento = _desplazamiento;
 			if (posY > VENTANA) {
 				desactivar();  // Desactivar si sale de la pantalla 
+				gotoxy(2, VENTANA + 4);
 			}
 		}
 	}
@@ -344,52 +351,133 @@ public:
 	}
 };
 
+// --------------------------------------------------- gestor de interface
+// hay muchas cosas que cambiar, en las pruebas quitaba los marcos laterales
+class pantalla {
+public:
+	void mostrarPantallaInicial() {
+		clrscr();// borrar pantalla para empezar
+		textcolor(LIGHTCYAN);
+		gotoxy(10, 10);
+		cout << "DEFENSA EN EL GRAN CANON DE TITAN";
+		textcolor(WHITE);
+		gotoxy(10, 12);
+		cout << "Presiona cualquier tecla para comenzar...";
+		getch(); // Espera a que el jugador presione una tecla
+	}
+	
+	void mostrarPantallaGameOver(int puntaje) {
+		clrscr();
+		textcolor(RED);
+		gotoxy(10, 10);
+		cout << "GAME OVER";
+		gotoxy(10, 12);
+		cout << "Puntaje final: " << puntaje;
+		textcolor(WHITE);
+		esperar(5000); // Espera 5 segundos
+		mostrarPantallaInicial();
+	}
+	
+	void mostrarPantallaVictoria(int puntaje) {
+		clrscr();
+		textcolor(GREEN);
+		gotoxy(10, 10);
+		cout << "VICTORIA!";
+		gotoxy(10, 12);
+		cout << "Puntaje final: " << puntaje;
+		textcolor(WHITE);
+		esperar(7000); // Espera 7 segundos
+		mostrarPantallaInicial();
+	}
+	
+	void dibujarMarco() {
+		textcolor(WHITE);
+		// solo agrego línea inferior
+		for (int i = 1; i <= ANCHO -1; i++) {
+			gotoxy(i, VENTANA + 2);
+			putchar('-'); // Línea inferior
+		}
+		textcolor(WHITE);
+	}
+	
+	void actualizarInterface(int vidas, int puntaje) {
+		gotoxy(2, VENTANA + 3);
+		cout << "VIDAS: " << vidas << "   PUNTAJE: " << puntaje;
+	}
+	
+};
+
 //---------------------------------------------------main
 int main (int argc, char *argv[]) {
+	pantalla gestorPantalla;
 	terreno zona;
 	nave gladiador;
 	naveEnemiga enemigo;
-	proyectil proyectiles[5]; // hasta 5 proyectiles consecutivos
 	clock_t tInicioScroll = clock();
 	clock_t tInicioLateral = clock();
-	zona.inicializarCanon();
-	puntaje = 0;
-	while(true){
+	clock_t tMensaje = clock();
+	proyectil proyectiles[5]; // hasta 5 proyectiles consecutivos
+	mensajeActivo = false;
+	bool mensajeMostrando = false;
+	
+	while (true) {
+		// Mostrar pantalla inicial
+		gestorPantalla.mostrarPantallaInicial();
 		
-		if(clock()-tInicioScroll>=(VELOCIDAD * CLOCKS_PER_SEC / 1000)){
-			desplazamiento++;
-			puntaje = puntaje + 10;
-			zona.dibujar();
-			enemigo.actualizarDesplazamiento(desplazamiento);  // Sincroniza con el cañón
-			tInicioScroll = clock();
-			if (desplazamiento % 25 == 0 && !enemigo.estaActiva()) { // activar nave cada multiplo de 25 desplazamientos
-				enemigo.activar(desplazamiento);
+		// Reiniciar todo el juego para que funcione infinitamente
+		gladiador = nave();  // Reiniciar la nave del jugador
+		enemigo = naveEnemiga();  // Reiniciar la nave enemiga
+		for (int i = 0; i < 5; i++) {
+			proyectiles[i] = proyectil();  // Reiniciar los proyectiles
+		}
+		puntaje = 0;  // Reiniciar puntaje
+		desplazamiento = 0;  // Reiniciar desplazamiento
+		VELOCIDAD = VELOCIDAD_INICIAL;  // Reiniciar velocidad del juego
+		
+		zona.inicializarCanon();  // Regenerar el terreno
+		clrscr();
+		
+		tInicioScroll = clock();
+		tInicioLateral = clock();
+		tMensaje = clock();
+		
+		// Bucle principal del juego
+		while(true){
+			gestorPantalla.dibujarMarco(); // Me parece que esto deberia ser fijo y actualizar datos por eventos
+			gestorPantalla.actualizarInterface(gladiador.getVidas(), puntaje);
+			if(clock()-tInicioScroll>=(VELOCIDAD * CLOCKS_PER_SEC / 1000)){
+				desplazamiento++;
+				puntaje = puntaje + 10;
+				zona.dibujar();
+				enemigo.actualizarDesplazamiento(desplazamiento);  // Sincroniza con el cañón
+				tInicioScroll = clock();
+				if (desplazamiento % 25 == 0 && !enemigo.estaActiva()) { // activar nave cada multiplo de 25 desplazamientos
+					enemigo.activar(desplazamiento);
+				}
+			} 
+			
+									   
+			if(clock()-tInicioLateral>=(VELOCIDAD * 2 * CLOCKS_PER_SEC / 1000)){
+				enemigo.actualizar();
+				tInicioLateral = clock();
 			}
-		} 
-		
-		if(clock()-tInicioLateral>=(VELOCIDAD * 2 * CLOCKS_PER_SEC / 1000)){
-			enemigo.actualizar();
 			
-			tInicioLateral = clock();
-		}
-		
-		
-		if(desplazamiento >= 800){
-			break; // en el futuro será la pantalla de ganador
-		}
-		
-		//enemigo.actualizar();
-		enemigo.dibujar();
-		gladiador.mover();
-		gladiador.dibujar();
-		char obstaculo = zona.fondo(gladiador.getX()); // Buscar en la última linea
-		gladiador.manejarColision(obstaculo);
-		if (enemigo.estaActiva() && 
-			gladiador.getX() == enemigo.getX() && 
-			gladiador.getY() == enemigo.getY()) {
-			gladiador.manejarColision('X');
-		}
+			if(desplazamiento >= 800){
+				break; // en el futuro será la pantalla de ganador
+			}
 			
+			//enemigo.actualizar();
+			enemigo.dibujar();
+			gladiador.mover();
+			gladiador.dibujar();
+			char obstaculo = zona.fondo(gladiador.getX()); // Buscar en la última linea
+			gladiador.manejarColision(obstaculo);
+			if (enemigo.estaActiva() && 
+				gladiador.getX() == enemigo.getX() && 
+				gladiador.getY() == enemigo.getY()) {
+				gladiador.manejarColision('X');
+			}
+				
 			if(gladiador.dispara){
 				for (int i = 0; i < 5; i++) {
 					if (!proyectiles[i].estaActivo()) {
@@ -413,17 +501,24 @@ int main (int argc, char *argv[]) {
 						enemigo.desactivar(); // Impacto en la nave enemiga
 						proyectiles[i].desactivar(); // Desactivar proyectil
 						puntaje += 100; // Aumentar puntaje por impacto
+						gotoxy(2, VENTANA + 4);
+						cout << "Excelente Punteria              ";
+						
 					}
 				}
 			}
+				
+			if(desplazamiento >= 800){
+				gestorPantalla.mostrarPantallaVictoria(puntaje);
+				break; // en el futuro será la pantalla de ganador
+			}
+			if (gladiador.getVidas() <= 0) {
+				gestorPantalla.mostrarPantallaGameOver(puntaje);
+				break;
+			}
 			
-		gotoxy(1,22);
-		cout<<"VIDAS: "<<gladiador.getVidas()<<"   PUNTAJE: "<<puntaje;
-		if(desplazamiento >= 800){
-			break; // en el futuro será la pantalla de ganador
 		}
-		
-	}
+}
 	
 	return 0;
 }
