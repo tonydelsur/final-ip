@@ -98,9 +98,11 @@ private:
 	bool inmunidad;
 	int aPosX, aPosY;
 	clock_t tUltimaColision;
-	bool dispara;
+	
 	
 public:
+	bool dispara;
+	
 	nave(){
 		posX = ANCHO / 2;
 		posY = 20;
@@ -135,7 +137,10 @@ public:
 		bool getDistapara(){
 			return dispara;
 		}
-		
+		void setDispara(bool _dispara){
+			dispara = _dispara;
+		}
+			
 	void dibujar() override{ //dibujar en pantalla, problema es tiempo de actualizacion
 		gotoxy(aPosX,posY);
 		putchar(' ');
@@ -274,22 +279,68 @@ public:
 	bool estaActiva() { 
 		return activa; 
 	}
+
 };
 
 //--------------------------------------------------proyectil
 // implementar proyectil con temporizador como con velocidad lateral
 class proyectil : public Principal {
 private:
-	
-	
+	bool activo;           // Esta activo?
+	clock_t tInicio;       // Vamos a temporizar este tambien, luego pruebo de ponerlo en el main
+	int velocidadVertical; // Retraso entre movimientos
 public:
-	proyectil(int _x){
-				posX = _x;
+	proyectil(){
+		activo=false;
+		velocidadVertical=100;
 	}
-	~proyectil() {}
 	
-	void avanza(){
+	void activar(int x, int y) {
+		posX = x;
+		posY = y - 1; // Aparece justo arriba de la nave, quizas no se implemente desde aquí luego
+		activo = true;
+		tInicio = clock(); // Inicia el temporizador para el movimiento
+	}
+	
+	void desactivar() {
+		activo = false;
+	}
+	
+	void actualizar() override {
+		if (!activo) return;
 		
+		if (clock() - tInicio >= (velocidadVertical * CLOCKS_PER_SEC / 1000)) {
+			// Borrar el proyectil en la posición anterior
+			gotoxy(posX, posY);
+			putchar(' ');
+			
+			posY--;
+			
+			if (posY < 0) {
+				desactivar(); // Desactivar si sale de la pantalla
+			}
+			
+			tInicio = clock(); // Reinicia el temporizador
+		}
+	}
+	
+	void dibujar() override {
+		if (!activo) return;
+		
+		gotoxy(posX, posY);
+		putchar('|'); // DIBUJA PROYECTIL
+	}
+	
+	bool estaActivo() {
+		return activo;
+	}
+	
+	int getX() {
+		return posX;
+	}
+	
+	int getY() {
+		return posY;
 	}
 };
 
@@ -298,6 +349,7 @@ int main (int argc, char *argv[]) {
 	terreno zona;
 	nave gladiador;
 	naveEnemiga enemigo;
+	proyectil proyectiles[5]; // hasta 5 proyectiles consecutivos
 	clock_t tInicioScroll = clock();
 	clock_t tInicioLateral = clock();
 	zona.inicializarCanon();
@@ -315,7 +367,7 @@ int main (int argc, char *argv[]) {
 			}
 		} 
 		
-		if(clock()-tInicioLateral>=(VELOCIDAD * 3 * CLOCKS_PER_SEC / 1000)){
+		if(clock()-tInicioLateral>=(VELOCIDAD * 2 * CLOCKS_PER_SEC / 1000)){
 			enemigo.actualizar();
 			
 			tInicioLateral = clock();
@@ -337,11 +389,40 @@ int main (int argc, char *argv[]) {
 			gladiador.getY() == enemigo.getY()) {
 			gladiador.manejarColision('X');
 		}
+			
+			if(gladiador.dispara){
+				for (int i = 0; i < 5; i++) {
+					if (!proyectiles[i].estaActivo()) {
+						proyectiles[i].activar(gladiador.getX(), gladiador.getY());
+						break; // Activa un solo proyectil por pulsación
+					}
+				}
+				gladiador.dispara = false;
+				
+			}
+			// Actualizar proyectiles y verificar colisiones con la nave enemiga
+			for (int i = 0; i < 5; i++) {
+				if (proyectiles[i].estaActivo()) {
+					proyectiles[i].actualizar();
+					proyectiles[i].dibujar();
+					
+					// Verificar colisión con la nave enemiga
+					if (enemigo.estaActiva() &&
+						proyectiles[i].getX() == enemigo.getX() &&
+						proyectiles[i].getY() == enemigo.getY()) {
+						enemigo.desactivar(); // Impacto en la nave enemiga
+						proyectiles[i].desactivar(); // Desactivar proyectil
+						puntaje += 100; // Aumentar puntaje por impacto
+					}
+				}
+			}
+			
 		gotoxy(1,22);
 		cout<<"VIDAS: "<<gladiador.getVidas()<<"   PUNTAJE: "<<puntaje;
 		if(desplazamiento >= 800){
 			break; // en el futuro será la pantalla de ganador
 		}
+		
 	}
 	
 	return 0;
