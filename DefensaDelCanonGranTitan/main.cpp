@@ -80,8 +80,7 @@ public:
 			}
 			canon[i] = linea; // Asignar el string al arreglo unidimensional
 		}
-		gotoxy(2, VENTANA + 4);
-		cout << "Recuerda no enfrentarlos directamente";
+		mensaje = "Recuerda no enfrentarlos directamente";
 	}
 	void dibujar(){
 		for(int i= 0; i<20;i++){
@@ -186,8 +185,7 @@ public:
 				if (clock() - tUltimaColision >= TIEMPO_INMUNIDAD * CLOCKS_PER_SEC / 1000) {
 					vidas--;
 					tUltimaColision = clock();
-					gotoxy(2, VENTANA + 4);
-					cout << "Cuidado, puedes dañar la nave";
+					mensaje = "Cuidado, puedes dañar la nave";
 				}
 				}
 
@@ -241,7 +239,6 @@ public:
 			ultimoDesplazamiento = _desplazamiento;
 			if (posY > VENTANA) {
 				desactivar();  // Desactivar si sale de la pantalla 
-				gotoxy(2, VENTANA + 4);
 			}
 		}
 	}
@@ -358,10 +355,26 @@ public:
 	void mostrarPantallaInicial() {
 		clrscr();// borrar pantalla para empezar
 		textcolor(LIGHTCYAN);
-		gotoxy(10, 10);
+		gotoxy(10, 5);
 		cout << "DEFENSA EN EL GRAN CANON DE TITAN";
+		gotoxy(5, 8);
+		cout << "Nos llegan reportes de exploradores enemigos";
+		gotoxy(5, 9);
+		cout << "en las usinas de TITAN, tu te dirijes alli...";
+		gotoxy(5, 10);
+		cout << "Registra toda la información posible, tu nave";
+		gotoxy(5, 11);
+		cout << "no esta preparada para una batalla abierta.";
+		gotoxy(5, 12);
+		cout << "Infiltrate por el cañon e informanos.";
+		gotoxy(5, 13);
+		cout << "Pero si tienes oportunidad... ";
+		gotoxy(5, 14);
+		cout << "dispara algunos proyectiles.";
+		gotoxy(5, 15);
+		cout << "Suerte y espera los reuerzos.";
 		textcolor(WHITE);
-		gotoxy(10, 12);
+		gotoxy(10, 19);
 		cout << "Presiona cualquier tecla para comenzar...";
 		getch(); // Espera a que el jugador presione una tecla
 	}
@@ -393,16 +406,51 @@ public:
 	void dibujarMarco() {
 		textcolor(WHITE);
 		// solo agrego línea inferior
-		for (int i = 1; i <= ANCHO -1; i++) {
+		gotoxy(1, VENTANA + 2);
+		putchar(218); 
+		gotoxy(1, VENTANA + 3);
+		putchar(179); 
+		gotoxy(ANCHO, VENTANA + 2);
+		putchar(191); 
+		gotoxy(ANCHO, VENTANA + 3);
+		putchar(179);
+		gotoxy(1, VENTANA + 4);
+		putchar(195); 
+		gotoxy(1, VENTANA + 5);
+		putchar(179);
+		gotoxy(ANCHO, VENTANA + 4);
+		putchar(180); 
+		gotoxy(ANCHO, VENTANA + 5);
+		putchar(179);
+		gotoxy(1, VENTANA + 6);
+		putchar(192); 
+		gotoxy(ANCHO, VENTANA + 6);
+		putchar(217); 
+		for (int i = 2; i <= ANCHO -1; i++) {
 			gotoxy(i, VENTANA + 2);
-			putchar('-'); // Línea inferior
+			putchar(196); // Línea superior panek
+			gotoxy(i, VENTANA + 4);
+			putchar(196); // Línea superior panek
+			gotoxy(i, VENTANA + 6);
+			putchar(196); // Línea superior panek
 		}
+		gotoxy(ANCHO/2, VENTANA + 2);
+		putchar(194);
+		gotoxy(ANCHO/2, VENTANA + 3);
+		putchar(179);
+		gotoxy(ANCHO/2, VENTANA + 4);
+		putchar(193);
+		gotoxy(2,VENTANA + 5);
+		cout << mensaje;
+				
 		textcolor(WHITE);
 	}
 	
 	void actualizarInterface(int vidas, int puntaje) {
-		gotoxy(2, VENTANA + 3);
-		cout << "VIDAS: " << vidas << "   PUNTAJE: " << puntaje;
+		gotoxy(5, VENTANA + 3);
+		cout << "VIDAS: " << vidas;
+		gotoxy(21, VENTANA + 3);
+		cout << "   PUNTAJE: " << puntaje;
 	}
 	
 };
@@ -440,6 +488,7 @@ int main (int argc, char *argv[]) {
 		tInicioScroll = clock();
 		tInicioLateral = clock();
 		tMensaje = clock();
+		mensaje=' ';
 		
 		// Bucle principal del juego
 		while(true){
@@ -468,6 +517,7 @@ int main (int argc, char *argv[]) {
 			
 			//enemigo.actualizar();
 			enemigo.dibujar();
+			
 			gladiador.mover();
 			gladiador.dibujar();
 			char obstaculo = zona.fondo(gladiador.getX()); // Buscar en la última linea
@@ -501,8 +551,7 @@ int main (int argc, char *argv[]) {
 						enemigo.desactivar(); // Impacto en la nave enemiga
 						proyectiles[i].desactivar(); // Desactivar proyectil
 						puntaje += 100; // Aumentar puntaje por impacto
-						gotoxy(2, VENTANA + 4);
-						cout << "Excelente Punteria              ";
+						mensaje = "Excelente Punteria          ";
 						
 					}
 				}
@@ -523,3 +572,19 @@ int main (int argc, char *argv[]) {
 	return 0;
 }
 
+
+
+/*
+codigos para marco:
+218 esquina superior izquierda
+196 horizontal
+194 t normal_distribution
+191 angulo superior derecho
+179 vertical
+217 angulo inferior derecho
+193 t invertida
+192 angulo inferior izquierdo
+195 t lateral izquierda
+197 cruz
+180 t derecha
+*/
