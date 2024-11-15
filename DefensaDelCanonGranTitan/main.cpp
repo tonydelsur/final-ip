@@ -382,24 +382,53 @@ public:
 	void mostrarPantallaGameOver(int puntaje) {
 		clrscr();
 		textcolor(RED);
-		gotoxy(10, 10);
+		gotoxy(10, 6);
 		cout << "GAME OVER";
-		gotoxy(10, 12);
+		textcolor(LIGHTGRAY);
+		gotoxy(5, 8);
+		cout << "Tus nervios no te jugaron";
+		gotoxy(5, 9);
+		cout << "una buena pasada...";
+		gotoxy(5, 10);
+		cout << "A pesar de eso, la información ";
+		gotoxy(5, 11);
+		cout << "que recolectaste";
+		gotoxy(5, 12);
+		cout << "fue muy util.";
+		gotoxy(5, 13);
+		cout << "Aguarda, el equipo de rescate";
+		gotoxy(5, 14);
+		cout << "esta en camino.";
+		gotoxy(5, 17);
+		textcolor(LIGHTMAGENTA);
 		cout << "Puntaje final: " << puntaje;
 		textcolor(WHITE);
-		esperar(5000); // Espera 5 segundos
+		esperar(10000); // Espera 5 segundos
 		mostrarPantallaInicial();
 	}
 	
 	void mostrarPantallaVictoria(int puntaje) {
 		clrscr();
 		textcolor(GREEN);
-		gotoxy(10, 10);
-		cout << "VICTORIA!";
-		gotoxy(10, 12);
+		gotoxy(10, 6);
+		textcolor(WHITE);
+		cout << "FELICITACIONES!";
+		textcolor(LIGHTGRAY);
+		gotoxy(5, 8);
+		cout << "Has logrado atravezar el canon,";
+		gotoxy(5, 9);
+		cout << "recolectando información crucial";
+		gotoxy(5, 10);
+		cout << "y sobrevivir hasta que llegaron los refuerzos";
+		gotoxy(5, 12);
+		cout << "Demasiado bien...";
+		gotoxy(5, 13);
+		cout << "para un inspector de Usinas Jubilado";
+		gotoxy(10, 16);
+		textcolor(LIGHTBLUE);
 		cout << "Puntaje final: " << puntaje;
 		textcolor(WHITE);
-		esperar(7000); // Espera 7 segundos
+		esperar(10000); // Espera 7 segundos
 		mostrarPantallaInicial();
 	}
 	
@@ -440,8 +469,6 @@ public:
 		putchar(179);
 		gotoxy(ANCHO/2, VENTANA + 4);
 		putchar(193);
-		gotoxy(2,VENTANA + 5);
-		cout << mensaje;
 				
 		textcolor(WHITE);
 	}
@@ -451,6 +478,10 @@ public:
 		cout << "VIDAS: " << vidas;
 		gotoxy(21, VENTANA + 3);
 		cout << "   PUNTAJE: " << puntaje;
+		textcolor(LIGHTGREEN);
+		gotoxy(2,VENTANA + 5);
+		cout << mensaje;
+		textcolor(WHITE);
 	}
 	
 };
@@ -557,7 +588,7 @@ int main (int argc, char *argv[]) {
 				}
 			}
 				
-			if(desplazamiento >= 800){
+			if(desplazamiento >= 800){ //largo de la zona de juego
 				gestorPantalla.mostrarPantallaVictoria(puntaje);
 				break; // en el futuro será la pantalla de ganador
 			}
