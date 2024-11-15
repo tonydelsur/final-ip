@@ -98,6 +98,7 @@ private:
 	bool inmunidad;
 	int aPosX, aPosY;
 	clock_t tUltimaColision;
+	bool dispara;
 	
 public:
 	nave(){
@@ -107,6 +108,7 @@ public:
 		aPosY = posY;
 		vidas = 5; 
 		tUltimaColision = clock();
+		dispara = false;
 	}
 		
 	void mover(){ // mover con las teclas
@@ -121,12 +123,19 @@ public:
 				aPosX = posX;
 				posX++;
 			}
-			// if(tecla==' '){ } // implementacion del disparo mas adelante
+			if(tecla==' '){
+				dispara = true;
+			} // implementacion del disparo mas adelante
 		} else {
 			gotoxy(aPosX, aPosY);
 			putchar(' ');
 		}
 	}
+	
+		bool getDistapara(){
+			return dispara;
+		}
+		
 	void dibujar() override{ //dibujar en pantalla, problema es tiempo de actualizacion
 		gotoxy(aPosX,posY);
 		putchar(' ');
@@ -188,11 +197,17 @@ private:
 	bool moviendoDerecha;  // Dirección del movimiento lateral
 	int ultimoDesplazamiento; // Último desplazamiento sincronizado
 	int aPosX, aPosY; // posicion anterior de la nave
+	int contadorLateral; //para contolar el retraso de movimiento lateral
+	int delayLateral; // espera forzada para el movimiento lateral
+	
 public:
 	naveEnemiga(){
 		activa=false;
 		moviendoDerecha=true;
 		ultimoDesplazamiento= 0;
+		contadorLateral = 0;
+		delayLateral = 50; //cantidad de ciclos de espera
+		// deberia utilizar un temporizador, pero por ahora va.. a disparar.
 	}
 	
 	void activar(int _desplazamiento) {
@@ -202,6 +217,7 @@ public:
 		limiteDer = posX + 5;  // Límite derecho
 		activa = true;
 		ultimoDesplazamiento = _desplazamiento;  // avanza con el cañon
+		contadorLateral = 0; // inicializacion del contador lateral para velocidad lateral
 	}
 	
 	void desactivar() {
@@ -223,10 +239,10 @@ public:
 		
 		// gotoxy(posX, posY - 1);
 		//putchar(' ');  // solo borrador para recordar, no borra realmente
+					
 		aPosX = posX;
 		aPosY = posY;
-		gotoxy(aPosX,aPosY);
-		putchar(' ');
+		
 		// Movimiento lateral medio raro
 		if (moviendoDerecha) {
 			posX++;
@@ -243,7 +259,10 @@ public:
 		if (!activa) return;
 		
 		gotoxy(posX, posY);
+		textcolor(15);
 		putchar('X');  // Mostrar la nave
+		gotoxy(aPosX,aPosY);
+		putchar(' ');
 	}
 	
 	int getX(){ 
@@ -258,6 +277,7 @@ public:
 };
 
 //--------------------------------------------------proyectil
+// implementar proyectil con temporizador como con velocidad lateral
 class proyectil : public Principal {
 private:
 	
@@ -279,6 +299,7 @@ int main (int argc, char *argv[]) {
 	nave gladiador;
 	naveEnemiga enemigo;
 	clock_t tInicioScroll = clock();
+	clock_t tInicioLateral = clock();
 	zona.inicializarCanon();
 	puntaje = 0;
 	while(true){
@@ -294,12 +315,18 @@ int main (int argc, char *argv[]) {
 			}
 		} 
 		
+		if(clock()-tInicioLateral>=(VELOCIDAD * 3 * CLOCKS_PER_SEC / 1000)){
+			enemigo.actualizar();
+			
+			tInicioLateral = clock();
+		}
+		
 		
 		if(desplazamiento >= 800){
 			break; // en el futuro será la pantalla de ganador
 		}
 		
-		enemigo.actualizar();
+		//enemigo.actualizar();
 		enemigo.dibujar();
 		gladiador.mover();
 		gladiador.dibujar();
