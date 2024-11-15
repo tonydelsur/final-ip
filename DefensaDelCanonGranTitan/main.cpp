@@ -493,120 +493,142 @@ public:
 	
 };
 
-//---------------------------------------------------main
-int main (int argc, char *argv[]) {
+// ------------------------------------------------------------------------------
+//															CLASE JUEGO PRINCIPAL
+// ------------------------------------------------------------------------------
+class Juego {
+private:
+	// Objetos de clases
 	pantalla gestorPantalla;
 	terreno zona;
 	nave gladiador;
 	naveEnemiga enemigo;
-	clock_t tInicioScroll = clock();
-	clock_t tInicioLateral = clock();
-	clock_t tMensaje = clock();
-	proyectil proyectiles[5]; // hasta 5 proyectiles consecutivos
-	mensajeActivo = false;
-	bool mensajeMostrando = false;
+	proyectil proyectiles[5];
 	
-	while (true) {
-		// Mostrar pantalla inicial
-		gestorPantalla.mostrarPantallaInicial();
-		
-		// Reiniciar todo el juego para que funcione infinitamente
-		gladiador = nave();  // Reiniciar la nave del jugador
-		enemigo = naveEnemiga();  // Reiniciar la nave enemiga
+	// temporizadores en el núcleo del juego
+	clock_t tInicioScroll;
+	clock_t tInicioLateral;
+	
+	void inicializar() {
+		// Inicializa el estado del juego
+		gladiador = nave();
+		enemigo = naveEnemiga();
 		for (int i = 0; i < 5; i++) {
-			proyectiles[i] = proyectil();  // Reiniciar los proyectiles
+			proyectiles[i] = proyectil();
 		}
-		puntaje = 0;  // Reiniciar puntaje
-		desplazamiento = 0;  // Reiniciar desplazamiento
-		VELOCIDAD = VELOCIDAD_INICIAL;  // Reiniciar velocidad del juego
+		puntaje = 0;
+		desplazamiento = 0;
+		VELOCIDAD = VELOCIDAD_INICIAL;
 		
-		zona.inicializarCanon();  // Regenerar el terreno
-		clrscr();
+		zona.inicializarCanon();
+		clrscr(); // no se puede utilizar en bucles
 		
 		tInicioScroll = clock();
 		tInicioLateral = clock();
-		tMensaje = clock();
-		mensaje=' ';
-		
-		// Bucle principal del juego
-		while(true){
-			gestorPantalla.dibujarMarco(); // Me parece que esto deberia ser fijo y actualizar datos por eventos
-			gestorPantalla.actualizarInterface(gladiador.getVidas(), puntaje);
-			if(clock()-tInicioScroll>=(VELOCIDAD * CLOCKS_PER_SEC / 1000)){
-				desplazamiento++;
-				puntaje = puntaje + 10;
-				zona.dibujar();
-				enemigo.actualizarDesplazamiento(desplazamiento);  // Sincroniza con el cañón
-				tInicioScroll = clock();
-				if (desplazamiento % 25 == 0 && !enemigo.estaActiva()) { // activar nave cada multiplo de 25 desplazamientos
-					enemigo.activar(desplazamiento);
-				}
-			} 
-			
-									   
-			if(clock()-tInicioLateral>=(VELOCIDAD * 2 * CLOCKS_PER_SEC / 1000)){
-				enemigo.actualizar();
-				tInicioLateral = clock();
-			}
-			
-			if(desplazamiento >= 800){
-				break; // en el futuro será la pantalla de ganador
-			}
-			
-			//enemigo.actualizar();
-			enemigo.dibujar();
-			
-			gladiador.mover();
-			gladiador.dibujar();
-			char obstaculo = zona.fondo(gladiador.getX()); // Buscar en la última linea
-			gladiador.manejarColision(obstaculo);
-			if (enemigo.estaActiva() && 
-				gladiador.getX() == enemigo.getX() && 
-				gladiador.getY() == enemigo.getY()) {
-				gladiador.manejarColision('X');
-			}
-				
-			if(gladiador.dispara){
-				for (int i = 0; i < 5; i++) {
-					if (!proyectiles[i].estaActivo()) {
-						proyectiles[i].activar(gladiador.getX(), gladiador.getY());
-						break; // Activa un solo proyectil por pulsación
-					}
-				}
-				gladiador.dispara = false;
-				
-			}
-			// Actualizar proyectiles y verificar colisiones con la nave enemiga
-			for (int i = 0; i < 5; i++) {
-				if (proyectiles[i].estaActivo()) {
-					proyectiles[i].actualizar();
-					proyectiles[i].dibujar();
-					
-					// Verificar colisión con la nave enemiga
-					if (enemigo.estaActiva() &&
-						proyectiles[i].getX() == enemigo.getX() &&
-						proyectiles[i].getY() == enemigo.getY()) {
-						enemigo.desactivar(); // Impacto en la nave enemiga
-						proyectiles[i].desactivar(); // Desactivar proyectil
-						puntaje += 100; // Aumentar puntaje por impacto
-						mensaje = "Excelente Punteria          ";
-						
-					}
-				}
-			}
-				
-			if(desplazamiento >= 800){ //largo de la zona de juego
-				gestorPantalla.mostrarPantallaVictoria(puntaje);
-				break; // en el futuro será la pantalla de ganador
-			}
-			if (gladiador.getVidas() <= 0) {
-				gestorPantalla.mostrarPantallaGameOver(puntaje);
-				break;
-			}
-			
-		}
-}
+		mensaje = " ";
+	}
 	
+	void manejarEntrada() {
+		gladiador.mover();
+		if (gladiador.dispara) {
+			for (int i = 0; i < 5; i++) {
+				if (!proyectiles[i].estaActivo()) {
+					proyectiles[i].activar(gladiador.getX(), gladiador.getY());
+					break;
+				}
+			}
+			gladiador.dispara = false;
+		}
+	}
+	
+	void actualizarJuego() {
+		if (clock() - tInicioScroll >= (VELOCIDAD * CLOCKS_PER_SEC / 1000)) {
+			desplazamiento++;
+			puntaje += 10;
+			zona.dibujar();
+			enemigo.actualizarDesplazamiento(desplazamiento);
+			tInicioScroll = clock();
+			// generar naves enemigas entre intervalos [cambiar el 25]
+			if (desplazamiento % 25 == 0 && !enemigo.estaActiva()) {
+				enemigo.activar(desplazamiento);
+			}
+		}
+		
+		//movimiento lateral de enemigos
+		if (clock() - tInicioLateral >= (VELOCIDAD * 2 * CLOCKS_PER_SEC / 1000)) {
+			enemigo.actualizar();
+			tInicioLateral = clock();
+		}
+		// gestor de proyectiles
+		for (int i = 0; i < 5; i++) {
+			if (proyectiles[i].estaActivo()) {
+				proyectiles[i].actualizar();
+				if (enemigo.estaActiva() &&
+					proyectiles[i].getX() == enemigo.getX() &&
+					proyectiles[i].getY() == enemigo.getY()) {
+					enemigo.desactivar();
+					proyectiles[i].desactivar();
+					puntaje += 100;
+					mensaje = "Excelente Puntería                  ";
+				}
+			}
+		}
+		
+		//colision con enemigos
+		gladiador.manejarColision(zona.fondo(gladiador.getX()));
+		if (enemigo.estaActiva() &&
+			gladiador.getX() == enemigo.getX() &&
+			gladiador.getY() == enemigo.getY()) {
+			gladiador.manejarColision('X'); 
+		}
+	}
+	
+	void dibujarJuego() {
+		gestorPantalla.dibujarMarco();
+		gestorPantalla.actualizarInterface(gladiador.getVidas(), puntaje);
+		enemigo.dibujar();
+		gladiador.dibujar();
+		for (int i = 0; i < 5; i++) {
+			proyectiles[i].dibujar();
+		}
+	}
+	
+	bool verificarEstado() {
+		if (gladiador.getVidas() <= 0) {
+			gestorPantalla.mostrarPantallaGameOver(puntaje);
+			return false;
+		}
+		// largo de la zona de juego hasta que llegan recuerzos
+		if (desplazamiento >= 800) {
+			gestorPantalla.mostrarPantallaVictoria(puntaje);
+			return false;
+		}
+		return true;
+	}
+	
+public:
+		void ejecutar() {
+			while (true) {
+				gestorPantalla.mostrarPantallaInicial();
+				inicializar();
+				while (true) {
+					manejarEntrada();
+					actualizarJuego();
+					dibujarJuego();
+					if (!verificarEstado()) {
+						break;
+					}
+				}
+			}
+		}
+};
+
+
+
+//---------------------------------------------------main
+int main (int argc, char *argv[]) {
+	Juego juego;
+	juego.ejecutar();
 	return 0;
 }
 
