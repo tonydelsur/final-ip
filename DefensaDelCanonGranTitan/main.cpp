@@ -355,25 +355,32 @@ public:
 	void mostrarPantallaInicial() {
 		clrscr();// borrar pantalla para empezar
 		textcolor(LIGHTCYAN);
-		gotoxy(10, 5);
+		gotoxy(10, 3);
 		cout << "DEFENSA EN EL GRAN CANON DE TITAN";
-		gotoxy(5, 8);
+		gotoxy(5, 6);
 		cout << "Nos llegan reportes de exploradores enemigos";
-		gotoxy(5, 9);
+		gotoxy(5, 7);
 		cout << "en las usinas de TITAN, tu te dirijes alli...";
-		gotoxy(5, 10);
+		gotoxy(5, 8);
 		cout << "Registra toda la información posible, tu nave";
-		gotoxy(5, 11);
+		gotoxy(5, 9);
 		cout << "no esta preparada para una batalla abierta.";
-		gotoxy(5, 12);
+		gotoxy(5, 10);
 		cout << "Infiltrate por el cañon e informanos.";
-		gotoxy(5, 13);
+		gotoxy(5, 11);
 		cout << "Pero si tienes oportunidad... ";
-		gotoxy(5, 14);
+		gotoxy(5, 12);
 		cout << "dispara algunos proyectiles.";
-		gotoxy(5, 15);
-		cout << "Suerte y espera los reuerzos.";
+		gotoxy(5, 13);
+		cout << "Suerte y espera los refuerzos.";
 		textcolor(WHITE);
+		gotoxy(5, 15);
+		cout << "Juega con las flechas DERECHA e IZQUIERDA";
+		gotoxy(5, 16);
+		cout << "Dispara con ESPACIO" ;
+		gotoxy(5, 17);
+		cout << "Se gana con destreza y buena suerte";
+		
 		gotoxy(10, 19);
 		cout << "Presiona cualquier tecla para comenzar...";
 		getch(); // Espera a que el jugador presione una tecla
